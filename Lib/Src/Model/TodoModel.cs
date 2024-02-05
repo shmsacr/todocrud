@@ -6,12 +6,12 @@ namespace todocrud.Lib.Src.Model;
 public class TodoModel
 {
 
-    public TodoModel(string title, string description, bool? isCompleted)
+    public TodoModel(string title, string description)
     {
         Id = ObjectId.GenerateNewId();
         Title = title;
         Description = description;
-        IsCompleted = isCompleted ?? false;
+        IsCompleted =  false;
         CreatedAt = DateTime.Now;
     }
     
