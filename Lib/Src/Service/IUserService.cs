@@ -13,6 +13,7 @@ public interface IUserService
     public Task<UserModel> GetUserByEmail(string email);
     public Task<List<UserModel>> GetAllUsers();
     public Task<IResult> LoginUser(LoginDTO loginDTO);
+    public Task<bool> AddTodoToUser(ObjectId userId, ObjectId todoId);
     
     
 }
