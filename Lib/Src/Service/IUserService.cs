@@ -14,6 +14,8 @@ public interface IUserService
     public Task<List<UserModel>> GetAllUsers();
     public Task<IResult> LoginUser(LoginDTO loginDTO);
     public Task<bool> AddTodoToUser(ObjectId userId, ObjectId todoId);
-    
-    
+    public Task<bool> RemoveTodoFromUser(ObjectId userId, ObjectId todoId);
+    public Task<IResult> Logout();
+
+
 }
