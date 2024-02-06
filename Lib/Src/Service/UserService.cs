@@ -1,5 +1,7 @@
 using System.Net;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -13,10 +15,14 @@ public class UserService: IUserService
 {
     private readonly IMongoCollection<UserModel> _userCollection;
     private readonly PasswordHasher _passwordHasher = new PasswordHasher();
-    public UserService(IOptions<MongoDBUserSettings> mongoDbSettings) {
+    private readonly TokenService _tokenService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    public UserService(IOptions<MongoDBUserSettings> mongoDbSettings, TokenService tokenService, IHttpContextAccessor httpContextAccessor) {
+        _httpContextAccessor = httpContextAccessor;
         MongoClient client = new MongoClient(mongoDbSettings.Value.ConnectionUri);
         IMongoDatabase database = client.GetDatabase(mongoDbSettings.Value.DatabaseName);
         _userCollection = database.GetCollection<UserModel>(mongoDbSettings.Value.CollectionName);
+        _tokenService = tokenService;
     }
     public async Task<UserModel> GetUserById(ObjectId id)
     {
@@ -103,9 +109,61 @@ public class UserService: IUserService
         var verifyPassword = _passwordHasher.Verify(loginDTO.Password, dbUser.Password!);
         if (verifyPassword)
         {
-            return Results.Ok(dbUser);
+            var tokenHandler = _tokenService.GenerateToken(dbUser);
+            return Results.Ok(tokenHandler);
         }
         return Results.BadRequest("Password is incorrect");
     }
+    
+    public async Task<bool> AddTodoToUser(ObjectId userId, ObjectId todoId)
+    {
+        var userFilter = Builders<UserModel>.Filter.Eq(u => u.Id, userId);
+        var user = await _userCollection.Find(userFilter).FirstOrDefaultAsync();
+        if (user != null)
+        {
+            if(user.TodosRef == null)
+            {
+                user.TodosRef = new List<ObjectId>();
+            }
+            user.TodosRef.Add(todoId);
 
+            var update = Builders<UserModel>.Update.Set(u => u.TodosRef, user.TodosRef);
+            var updateResult = await _userCollection.UpdateOneAsync(userFilter, update);
+
+            return updateResult.IsAcknowledged && updateResult.ModifiedCount > 0;
+        }
+
+        return false;
+    }
+
+    public async Task<bool> RemoveTodoFromUser(ObjectId userId, ObjectId todoId)
+    {
+        var userFilter = Builders<UserModel>.Filter.Eq(u => u.Id, userId);
+        var user = _userCollection.Find(userFilter).FirstOrDefault();
+        if (user != null)
+        {
+            user.TodosRef.Remove(todoId);
+            var update = Builders<UserModel>.Update.Set(u => u.TodosRef, user.TodosRef);
+            var updateResult = await _userCollection.UpdateOneAsync(userFilter, update);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public async Task<IResult> Logout()
+    {
+       
+        try
+        {
+             _httpContextAccessor.HttpContext.Response.Headers.Remove("Authorization");
+        }catch(Exception e)
+        {
+            return Results.BadRequest(e.Message);
+        }
+        
+        
+        return Results.Ok("Logged out successfully");
+    }
 }
