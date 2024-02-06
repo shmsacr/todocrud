@@ -1,15 +1,23 @@
+using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using todocrud.Lib.Src.Model;
+using Microsoft.AspNetCore.Http;
+using System;
+using Microsoft.AspNetCore.Mvc;
 
 namespace todocrud.Lib.Src.Service;
 
 public class TodoService: ITodoService
 {
     private readonly IMongoCollection<TodoModel> _collection;
-    public TodoService(IOptions<MongoDBSettings> mongoDBService)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly UserService _userService;
+    public TodoService(IOptions<MongoDBSettings> mongoDBService, IHttpContextAccessor httpContextAccessor, UserService userService)
     {
+        _httpContextAccessor = httpContextAccessor;
+        _userService = userService;
         MongoClient client = new MongoClient(mongoDBService.Value.ConnectionUri);
         IMongoDatabase database = client.GetDatabase(mongoDBService.Value.DatabaseName);
         _collection = database.GetCollection<TodoModel>(mongoDBService.Value.CollectionName);
@@ -30,10 +38,14 @@ public class TodoService: ITodoService
         return null;
     }
 
-    public async Task<TodoModel> CreateTodoModel(TodoModel todoModel)
+    public async Task<TodoModel> CreateTodoModel([FromBody] TodoModel todoModel)
     {
-        todoModel.CreatedAt = DateTime.Now;
+        var claimIdentity = _httpContextAccessor.HttpContext!.User.Identity as ClaimsIdentity;
+        var userId = ObjectId.Parse(claimIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
+        Console.WriteLine(userId);
+        todoModel.CreatedAt = DateTime.Now; 
         await _collection.InsertOneAsync(todoModel);
+        await _userService.AddTodoToUser(userId, todoModel.Id);
         return todoModel;
     }
 
@@ -51,8 +63,11 @@ public class TodoService: ITodoService
 
     public async Task<bool> DeleteTodoModel(ObjectId id)
     {
+        var claimIdentity = _httpContextAccessor.HttpContext!.User.Identity as ClaimsIdentity;
+        var userId = ObjectId.Parse(claimIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
         FilterDefinition<TodoModel> filter = Builders<TodoModel>.Filter.Eq("Id", id);
         DeleteResult deleteResult = await _collection.DeleteOneAsync(filter);
+        await _userService.RemoveTodoFromUser(userId, id);
         return deleteResult.IsAcknowledged && deleteResult.DeletedCount > 0;
     }
 }

@@ -21,7 +21,7 @@ builder.Services.AddAuthentication(
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     }
-    ).AddJwtBearer(options =>
+    ).AddCookie("Cookies").AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
