@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using todocrud.Lib.Src.DTOs.UserDTO;
 using todocrud.Lib.Src.Model;
@@ -8,10 +9,13 @@ namespace todocrud.Lib.Src.EnpointHandlers;
 public class UserEndpointHandlers
 {
     private readonly IUserService _userService;
+  
     public UserEndpointHandlers(IUserService userService)
     {
         _userService = userService;
+        
     }
+    
     public async Task<List<UserModel>> GetAllUsers()
     {
         return await _userService.GetAllUsers();
@@ -40,6 +44,10 @@ public class UserEndpointHandlers
     public async Task<IResult> LoginUser(LoginDTO loginDTO)
     {
         return await _userService.LoginUser(loginDTO);
+    }
+    public async Task<IResult> Logout()
+    {
+        return await _userService.Logout();
     }
     
 }
