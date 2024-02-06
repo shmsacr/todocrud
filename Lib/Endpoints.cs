@@ -27,6 +27,10 @@ public class Endpoints
         {
             return await new UserEndpointHandlers(userService).LoginUser(loginDTO);
         }).AllowAnonymous();
+        user.MapPost("logout", async (UserService userService) =>
+        {
+            return await new UserEndpointHandlers(userService).Logout();
+        }).RequireAuthorization();
         #endregion 
         /////////////////////////////////////////////////////////////////////////////
         #region TodoEndpoints
