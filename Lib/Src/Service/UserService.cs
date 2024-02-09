@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -46,7 +47,7 @@ public class UserService: IUserService
         var finder = await _userCollection.Find(user => user.Email == newUser.Email).FirstOrDefaultAsync();
         if(finder != null)
         {
-            return Results.BadRequest("User with this email already exists");
+            return Results.Unauthorized();
         }
 
         UserModel user = new UserModel(
@@ -56,7 +57,13 @@ public class UserService: IUserService
             );
         
         await _userCollection.InsertOneAsync(user);
-        return Results.Ok(user);
+        var tokenHandler = _tokenService.GenerateToken(user);
+        ResponseLoginDto responseLoginDto = new ResponseLoginDto()
+        {
+            Id = user.Id.ToString(),
+            Token = tokenHandler,
+        };
+        return Results.Ok(responseLoginDto);
     }
 
     public async Task<bool> UpdateUser(ObjectId id, UserModel userModel)
@@ -103,16 +110,22 @@ public class UserService: IUserService
 
         var dbUser = await _userCollection.Find(user => user.Email == loginDTO.Email).FirstOrDefaultAsync();
         if (dbUser == null)
-        {
-            return Results.BadRequest("User with this email does not exist");
+        { 
+            return Results.NotFound("User not found");
         }
         var verifyPassword = _passwordHasher.Verify(loginDTO.Password, dbUser.Password!);
         if (verifyPassword)
         {
             var tokenHandler = _tokenService.GenerateToken(dbUser);
-            return Results.Ok(tokenHandler);
+            ResponseLoginDto responseLoginDto = new ResponseLoginDto()
+            {
+                Id = dbUser.Id.ToString(),
+                Token = tokenHandler,
+            };
+            
+            return Results.Ok(responseLoginDto);
         }
-        return Results.BadRequest("Password is incorrect");
+        return Results.Unauthorized();
     }
     
     public async Task<bool> AddTodoToUser(ObjectId userId, ObjectId todoId)
