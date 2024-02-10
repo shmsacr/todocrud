@@ -15,7 +15,7 @@ public class TodoEndpointHandlers
         _todoService = todoService;
     }
     
-    public async Task<List<TodoModel>> GetAllTodos()
+    public async Task<List<ResponseAllTodoDto>> GetAllTodos()
     {
         return await _todoService.GetAllTodos();
     }
@@ -51,5 +51,12 @@ public class TodoEndpointHandlers
         return await _todoService.DeleteTodoModel(ObjectId.Parse(id));
     }
     
-    
+    public async Task<List<ResponseAllTodoDto>?> getTodoByUserId()
+    {
+        return await _todoService.GetTodoByUserId();
+    }
+    public async Task<IResult> updateTodoStatus(string id, bool status)
+    {
+        return await _todoService.updateTodoStatus(ObjectId.Parse(id), status);
+    }
 }
