@@ -47,7 +47,7 @@ public class UserService: IUserService
         var finder = await _userCollection.Find(user => user.Email == newUser.Email).FirstOrDefaultAsync();
         if(finder != null)
         {
-            return Results.Unauthorized();
+            return Results.BadRequest("User already exists");
         }
 
         UserModel user = new UserModel(
