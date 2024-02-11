@@ -62,6 +62,7 @@ public class UserService: IUserService
         {
             Id = user.Id.ToString(),
             Token = tokenHandler,
+            Name = user.Name,
         };
         return Results.Ok(responseLoginDto);
     }
@@ -121,6 +122,7 @@ public class UserService: IUserService
             {
                 Id = dbUser.Id.ToString(),
                 Token = tokenHandler,
+                Name = dbUser.Name,
             };
             
             return Results.Ok(responseLoginDto);
