@@ -47,13 +47,24 @@ public class Endpoints
         {
             return await new TodoEndpointHandlers(todoService).CreateTodoModel(todoModel);
         }).RequireAuthorization();
-        todo.MapPut("updateTodo/{id}", async (TodoService todoService, string id, UpdateDTO todoModel) =>
+        
+        todo.MapPut("updateTodo/", async (TodoService todoService,[FromBody] UpdateDTO todoModel) =>
         {
-            return await new TodoEndpointHandlers(todoService).UpdateTodoModel(id, todoModel);
+            return await new TodoEndpointHandlers(todoService).UpdateTodoModel(todoModel);
         }).RequireAuthorization();
-        todo.MapDelete("deleteTodo/{id}", async (TodoService todoService, string id) =>
+        todo.MapDelete("deleteTodo/", async (TodoService todoService, [FromBody] DeleteDTO id) =>
         {
-            return await new TodoEndpointHandlers(todoService).DeleteTodoModel(id);
+            return await new TodoEndpointHandlers(todoService).DeleteTodoModel(id.Id);
+        }).RequireAuthorization();
+        
+        todo.MapGet("getTodoByUserId/", async (TodoService todoService) =>
+        {
+            return await new TodoEndpointHandlers(todoService).getTodoByUserId();
+        }).RequireAuthorization();
+        
+        todo.MapPut("updateTodoStatus/", async (TodoService todoService,[FromBody] UpdataTodoStatusDto updateStatus) =>
+        {
+            return await new TodoEndpointHandlers(todoService).updateTodoStatus(updateStatus.Id, updateStatus.IsCompleted);
         }).RequireAuthorization();
         #endregion
 
