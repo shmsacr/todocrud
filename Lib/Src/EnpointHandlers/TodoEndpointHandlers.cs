@@ -30,23 +30,30 @@ public class TodoEndpointHandlers
     }
     public async Task<IResult> CreateTodoModel([FromBody]CreateTodoRequest todoModel)
     {
-        var todo = new TodoModel(
-            title:todoModel.Title,
-            description:todoModel.Description
-            
-        );  
+        var todo = new TodoModel()
+        {
+            Id = ObjectId.GenerateNewId(),
+            Title = todoModel.Title,
+            Description = todoModel.Description,
+            IsCompleted = false,
+            CreatedAt = DateTime.Now
+        };
         await _todoService.CreateTodoModel(todo);
         return Results.Ok(todo);
     }
-    public async Task<bool> UpdateTodoModel(string id, UpdateDTO todoModel)
+    public async Task<IResult> UpdateTodoModel( UpdateDTO todoModel)
     {
-        var todo = new TodoModel(
-            title:todoModel.Title,
-            description:todoModel.Description
-        );
-        return await _todoService.UpdateTodoModel(ObjectId.Parse(id), todo);
+        var todo = new TodoModel()
+        {
+            Id = ObjectId.Parse(todoModel.Id),
+            Title = todoModel.Title,
+            Description = todoModel.Description,
+            IsCompleted = todoModel.IsCompleted,
+            CreatedAt = DateTime.Now
+        };
+        return await _todoService.UpdateTodoModel(ObjectId.Parse(todoModel.Id), todo);
     }
-    public async Task<bool> DeleteTodoModel(string id)
+    public async Task<IResult> DeleteTodoModel(string id)
     {
         return await _todoService.DeleteTodoModel(ObjectId.Parse(id));
     }
@@ -57,6 +64,6 @@ public class TodoEndpointHandlers
     }
     public async Task<IResult> updateTodoStatus(string id, bool status)
     {
-        return await _todoService.updateTodoStatus(ObjectId.Parse(id), status);
+        return await _todoService.UpdateTodoStatus(ObjectId.Parse(id), status);
     }
 }
