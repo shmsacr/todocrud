@@ -64,26 +64,31 @@ public class TodoService: ITodoService
         return todoModel;
     }
 
-    public async Task <bool> UpdateTodoModel(ObjectId id, TodoModel todoModel)
+    public async Task <IResult> UpdateTodoModel(ObjectId id, TodoModel todoModel)
     { 
         var finder = await _collection.Find(todo => todo.Id == id).FirstOrDefaultAsync();
         if(finder != null)
         {
-            todoModel.CreatedAt = finder.CreatedAt;
-            await _collection.ReplaceOneAsync(todo => todo.Id == id, todoModel);
-            return true;
+           
+            await _collection.ReplaceOneAsync(todo => todo.Id.Equals(id), todoModel);
+            return Results.Ok(true);
         }
-        return false;
+        return Results.BadRequest("Todo not found");
     }
 
-    public async Task<bool> DeleteTodoModel(ObjectId id)
+    public async Task<IResult> DeleteTodoModel(ObjectId id)
     {
         var claimIdentity = _httpContextAccessor.HttpContext!.User.Identity as ClaimsIdentity;
         var userId = ObjectId.Parse(claimIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
         FilterDefinition<TodoModel> filter = Builders<TodoModel>.Filter.Eq("Id", id);
-        DeleteResult deleteResult = await _collection.DeleteOneAsync(filter);
+         await _collection.DeleteOneAsync(filter);
         await _userService.RemoveTodoFromUser(userId, id);
-        return deleteResult.IsAcknowledged && deleteResult.DeletedCount > 0;
+        var finder = await _collection.Find(todo => todo.Id == id).FirstOrDefaultAsync();
+        if(finder == null)
+        {
+            return Results.Ok(true);
+        }
+        return Results.BadRequest("Todo not found");
     }
 
     public async Task<List<ResponseAllTodoDto>?> GetTodoByUserId()
@@ -97,8 +102,7 @@ public class TodoService: ITodoService
         {
             return null;
         }
-        
-        user.TodosRef!.ForEach(async todoId =>
+        user.TodosRef!.ForEach( async todoId =>
         {
             var todo = await GetTodoById(todoId);
             responseAllTodoDtos.Add(new ResponseAllTodoDto
@@ -110,10 +114,14 @@ public class TodoService: ITodoService
                 CreatedAt = todo.CreatedAt
             });
         });
+        while (responseAllTodoDtos.Count != user.TodosRef.Count)
+        {
+            await Task.Delay(100);
+        }
         return responseAllTodoDtos;
     }
 
-    public async Task<IResult> updateTodoStatus(ObjectId id, bool status)
+    public async Task<IResult> UpdateTodoStatus(ObjectId id, bool status)
     {
         var todo = await GetTodoById(id);
         todo.IsCompleted = status;
