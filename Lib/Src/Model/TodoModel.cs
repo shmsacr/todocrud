@@ -6,14 +6,7 @@ namespace todocrud.Lib.Src.Model;
 public class TodoModel
 {
 
-    public TodoModel(string title, string description)
-    {
-        Id = ObjectId.GenerateNewId();
-        Title = title;
-        Description = description;
-        IsCompleted =  false;
-        CreatedAt = DateTime.Now;
-    }
+    
     
    
     
