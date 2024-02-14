@@ -20,7 +20,7 @@ public class TokenService
     public string GenerateToken(UserModel user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+        var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey!);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[]

@@ -28,7 +28,7 @@ public class TodoEndpointHandlers
         }
         return Results.Ok(todo);
     }
-    public async Task<IResult> CreateTodoModel([FromBody]CreateTodoRequest todoModel)
+    public async Task<IResult> CreateTodoModel(CreateTodoRequest todoModel)
     {
         var todo = new TodoModel()
         {
